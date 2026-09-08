@@ -32,6 +32,15 @@ jobs:
           docker push \
             ${{ secrets.DOCKER_USERNAME }}/production-devops-app:${IMAGE_TAG}
 
+      - name: Copy Kubernetes manifests
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "kubernetes/*"
+          target: "/home/ubuntu/"
+
       - name: Deploy to Kubernetes
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -39,6 +48,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            sudo k3s kubectl apply -f /home/ubuntu/kubernetes/app-deployment.yml
+            sudo k3s kubectl apply -f /home/ubuntu/kubernetes/service.yml
+
             sudo k3s kubectl set image deployment/devops-app \
               devops-app=${{ secrets.DOCKER_USERNAME }}/production-devops-app:${{ github.sha }}
 

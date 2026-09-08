@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -29,20 +30,14 @@ jobs:
           docker push \
             ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
 
-      - name: Deploy to EC2
+      - name: Deploy to Kubernetes
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
+            sudo k3s kubectl set image deployment/devops-app \
+              devops-app=${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
 
-            docker rm -f devops-web 2>/dev/null || true
-
-            docker run -d \
-              --name devops-web \
-              -p 80:80 \
-              ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
-
-            docker image prune -f
+            sudo k3s kubectl rollout status deployment/devops-app

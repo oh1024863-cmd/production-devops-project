@@ -1,0 +1,23 @@
+---
+- name: Configure DevOps Server
+  hosts: web
+  become: true
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - git
+        state: present
+
+    - name: Ensure Docker service is enabled and running
+      systemd:
+        name: docker
+        enabled: yes
+        state: started

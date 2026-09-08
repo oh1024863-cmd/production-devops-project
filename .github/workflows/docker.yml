@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,28 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest .
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest .
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
+          docker push \
+            ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
+
+            docker rm -f devops-web 2>/dev/null || true
+
+            docker run -d \
+              --name devops-web \
+              -p 80:80 \
+              ${{ secrets.DOCKER_USERNAME }}/production-devops-app:latest
+
+            docker image prune -f

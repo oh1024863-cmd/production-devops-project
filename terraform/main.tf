@@ -93,11 +93,11 @@ resource "aws_security_group" "web" {
   }
 
   ingress {
-    description = "SSH"
+    description = "SSH - Admin IP only"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["197.133.28.234/32"]
   }
 
   egress {
